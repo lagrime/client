@@ -3,7 +3,13 @@
 help_menu() {
     echo "Usage: $0 [options]"
     echo "Options:"
+    echo "  generate                         Generate a new key pair"
     echo "  help, -h, --help                 Shows this help message"
+}
+
+generate_keypair() {
+    openssl genpkey -algorithm RSA -out private_key.pem
+    openssl rsa -pubout -in private_key.pem -out public_key.pem
 }
 
 if [[ $# -eq 0 || "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
@@ -15,6 +21,9 @@ command=$1
 shift
 
 case "$command" in
+    generate)
+        generate_keypair
+        ;;
     *)
         echo "Error: Invalid option."
         help_menu
