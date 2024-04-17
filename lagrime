@@ -3,6 +3,8 @@
 help_menu() {
     echo "Usage: $0 [options]"
     echo "Options:"
+    echo "  encrypt [data_file] [receiver]   Encrypt data using a public key"
+    echo "  decrypt [data_file] [master]     Decrypt data using a private key"
     echo "  generate                         Generate a new key pair"
     echo "  help, -h, --help                 Shows this help message"
 }
@@ -10,6 +12,56 @@ help_menu() {
 generate_keypair() {
     openssl genpkey -algorithm RSA -out private_key.pem
     openssl rsa -pubout -in private_key.pem -out public_key.pem
+}
+
+encrypt_data() {
+    data_file=$1
+    receiver_address=$2
+
+    if [[ ! -f "$data_file" ]]; then
+        echo "Error: Data file not found."
+        exit 1
+    fi
+
+    if [[ -z "$receiver_address" ]]; then
+        echo "Error: Receiver not found."
+        exit 1
+    fi
+
+    encrypted_file="${data_file}.enc"
+
+    receiver_name="${receiver_address%%@*}"
+    receiver_server="${receiver_address#*@}"
+    public_key_json=$(curl -s "$receiver_server/get/public-key?key-user=$receiver_name")
+    public_key=$(jq -r '.public_key' <<< "$public_key_json")
+
+
+    local temp_file=$(mktemp)
+    echo "$public_key" > "$temp_file"
+    openssl pkeyutl -encrypt -in "$data_file" -pubin -inkey "$temp_file" -out "$encrypted_file"
+    rm -f "$temp_file"
+
+    echo "Encryption successful. Encrypted data saved as $encrypted_file"
+}
+
+decrypt_data() {
+    data_file=$1
+    private_key_file=$2
+
+    if [[ ! -f "$data_file" ]]; then
+        echo "Error: Data file not found."
+        exit 1
+    fi
+
+    if [[ ! -f "$private_key_file" ]]; then
+        echo "Error: Private key file not found."
+        exit 1
+    fi
+
+    decrypted_file="${data_file}.dec"
+
+    openssl pkeyutl -decrypt -in "$data_file" -inkey "$private_key_file" -out "$decrypted_file"
+    echo "Decryption successful. Decrypted data saved as $decrypted_file"
 }
 
 if [[ $# -eq 0 || "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
@@ -21,8 +73,14 @@ command=$1
 shift
 
 case "$command" in
+    encrypt)
+        encrypt_data "$1" "$2"
+        ;;
     generate)
         generate_keypair
+        ;;
+    decrypt)
+        decrypt_data "$1" "$2"
         ;;
     *)
         echo "Error: Invalid option."
