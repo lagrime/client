@@ -3,10 +3,56 @@
 help_menu() {
     echo "Usage: $0 [options]"
     echo "Options:"
-    echo "  encrypt [data_file] [receiver]   Encrypt data using a public key"
-    echo "  decrypt [data_file] [master]     Decrypt data using a private key"
-    echo "  generate                         Generate a new key pair"
-    echo "  help, -h, --help                 Shows this help message"
+    echo "  encrypt [data_file] [receiver]                                   Encrypt data using a public key"
+    echo "  decrypt [data_file] [master]                                     Decrypt data using a private key"
+    echo "  generate                                                         Generate a new key pair"
+    echo "  register [private_key] [public_key] [user_name] [server_address] Register a new key pair to a server"
+    echo "  help, -h, --help                                                 Shows this help message"
+}
+
+fetch_public_key() {
+    receiver_address=$1
+
+    if [[ -z "$receiver_address" ]]; then
+        echo "Error: Receiver not found."
+        exit 1
+    fi
+
+    receiver_name="${receiver_address%%@*}"
+    receiver_server="${receiver_address#*@}"
+    public_key_json=$(curl -s "$receiver_server/get/public-key?key-user=$receiver_name")
+    public_key=$(jq -r '.public_key' <<< "$public_key_json")
+    echo "$public_key" > "$receiver_name.pub"
+}
+
+generate_and_register_keypair() {
+    private_key_file=$1
+    public_key_file=$2
+    user_name=$3
+    server_address=$4
+
+    if [[ ! -f "$private_key_file" ]]; then
+        echo "Error: Private key file not found."
+        exit 1
+    fi
+
+    if [[ ! -f "$public_key_file" ]]; then
+        echo "Error: Public key file not found."
+        exit 1
+    fi
+
+    if [[ -z "$user_name" ]]; then
+        echo "Error: User name not found."
+        exit 1
+    fi
+
+    if [[ -z "$server_address" ]]; then
+        echo "Error: Server address not found."
+        exit 1
+    fi
+
+    public_key=$(cat "$public_key_file")
+    curl -s -X POST "$server_address/register/" -d "user_name=$user_name&public_key=$public_key"
 }
 
 generate_keypair() {
