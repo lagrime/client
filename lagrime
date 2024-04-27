@@ -7,6 +7,7 @@ help_menu() {
     echo "  decrypt [data_file] [master]                                     Decrypt data using a private key"
     echo "  generate                                                         Generate a new key pair"
     echo "  register [private_key] [public_key] [user_name] [server_address] Register a new key pair to a server"
+    echo "  fetch [receiver]                                                 Fetch the public key of a user from a server"
     echo "  help, -h, --help                                                 Shows this help message"
 }
 
