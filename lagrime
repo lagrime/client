@@ -11,6 +11,35 @@ help_menu() {
     echo "  help, -h, --help                                                 Shows this help message"
 }
 
+reset_public_key() {
+    address=$1
+    private_key_file=$2
+    new_public_key_file=$3
+
+    if [[ -z "$address" ]]; then
+        echo "Error: Address not found."
+        exit 1
+    fi
+
+    if [[ ! -f "$private_key_file" ]]; then
+        echo "Error: Private key file not found."
+        exit 1
+    fi
+
+    if [[ ! -f "$new_public_key_file" ]]; then
+        echo "Error: New public key file not found."
+        exit 1
+    fi
+
+    user_name="${address%%@*}"
+    server_address="${address#*@}"
+    private_key=$(cat "$private_key_file")
+
+    auth_response=$(curl -s -X POST "$server_address/auth/hello" -d "user=$user_name")
+    challenge=$(jq -r '.encrypted_challenge' <<< "$auth_response")
+
+}
+
 fetch_public_key() {
     receiver_address=$1
 
