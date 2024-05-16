@@ -38,6 +38,11 @@ reset_public_key() {
     auth_response=$(curl -s -X POST "$server_address/auth/hello" -d "user=$user_name")
     challenge=$(jq -r '.encrypted_challenge' <<< "$auth_response")
 
+    decrypted_challenge=$(openssl pkeyutl -decrypt -in <(echo "$challenge") -inkey "$private_key")
+    curl -s -X POST "$server_address/auth/complete" -d "user=$user_name&decrypted_challenge=$decrypted_challenge"
+    access_token=$(jq -r '.access_token' <<< "$auth_response")
+
+    curl -s -X POST "$server_address/set/public-key" -d "token=$access_token&new_key=$(cat "$new_public_key_file")"
 }
 
 fetch_public_key() {
