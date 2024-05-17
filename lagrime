@@ -8,6 +8,7 @@ help_menu() {
     echo "  generate                                                         Generate a new key pair"
     echo "  register [private_key] [public_key] [user_name] [server_address] Register a new key pair to a server"
     echo "  fetch [receiver]                                                 Fetch the public key of a user from a server"
+    echo "  reset [address] [private_key_file] [new_public_key_file]         Reset your public key on a server"
     echo "  help, -h, --help                                                 Shows this help message"
 }
 
