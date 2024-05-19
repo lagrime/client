@@ -117,12 +117,7 @@ encrypt_data() {
     public_key_json=$(curl -s "$receiver_server/get/public-key?key-user=$receiver_name")
     public_key=$(jq -r '.public_key' <<< "$public_key_json")
 
-
-    local temp_file=$(mktemp)
-    echo "$public_key" > "$temp_file"
-    openssl pkeyutl -encrypt -in "$data_file" -pubin -inkey "$temp_file" -out "$encrypted_file"
-    rm -f "$temp_file"
-
+    openssl pkeyutl -encrypt -in "$data_file" -pubin -inkey <(echo "$public_key") -out "$encrypted_file"
     echo "Encryption successful. Encrypted data saved as $encrypted_file"
 }
 
